@@ -306,11 +306,11 @@ class CommonMark extends BaseExtensibleParser implements AllowedHtmlInterface {
     if (!$this->converter) {
       $version = $this->getVersion();
       switch (TRUE) {
-        case Semver::satisfies($version, '>=0.13.0'):
+        case $version && Semver::satisfies($version, '>=0.13.0'):
           $this->converter = $this->getObject($this->getSettings(TRUE), $this->getEnvironment());
           break;
 
-        case Semver::satisfies($version, '>=0.6.0 <0.13.0'):
+        case $version && Semver::satisfies($version, '>=0.6.0 <0.13.0'):
           $this->converter = $this->getObject($this->getSettings(TRUE));
           break;
 
