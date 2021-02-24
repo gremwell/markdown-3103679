@@ -14,7 +14,7 @@ use Drupal\markdown\Plugin\Markdown\CommonMark\BaseExtension;
  *   libraries = {
  *     @ComposerPackage(
  *       id = "league/commonmark",
- *       object = "\League\CommonMark\Extension\DisallowedRawHTML\DisallowedRawHTMLExtension",
+ *       object = "\League\CommonMark\Extension\DisallowedRawHtml\DisallowedRawHtmlExtension",
  *       customLabel = "commonmark-disallowed-raw-html",
  *       url = "https://commonmark.thephpleague.com/extensions/disallowed-raw-html/",
  *       requirements = {
