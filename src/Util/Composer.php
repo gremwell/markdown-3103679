@@ -10,13 +10,9 @@ use Drupal\Component\Utility\DiffArray;
  * Helper class used to deal with composer.
  *
  * @internal
- *
- * @todo Move upstream to https://www.drupal.org/project/installable_plugins
- *   and extend \Composer\InstalledVersions once Composer 2 is fully supported.
- *
  * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
- *   Use \Composer\InstalledVersions provided by composer-runtime-api.
- * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+ *   Use \Composer\InstalledVersions instead.
+ * @see https://www.drupal.org/project/markdown/issues/3200476
  */
 class Composer {
 
@@ -28,7 +24,7 @@ class Composer {
    * @internal
    * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
    *   No replacement.
-   * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+   * @see https://www.drupal.org/project/markdown/issues/3200476
    */
   const VERSION_HASH_FILE_NAME = '.composer_version_hash.json';
 
@@ -40,7 +36,7 @@ class Composer {
    * @internal
    * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
    *   No replacement.
-   * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+   * @see https://www.drupal.org/project/markdown/issues/3200476
    */
   const VERSION_HASH_IGNORE_REGEX = '/^(?:\.|\.\.|\..+|Install.*|Make.*|License.*|.*test.*|psalm\.xml|php.*\.dist|php.*\.xml|.*\.neon)$/i';
 
@@ -51,7 +47,7 @@ class Composer {
    *
    * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
    *   No replacement.
-   * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+   * @see https://www.drupal.org/project/markdown/issues/3200476
    */
   protected static $versionHash;
 
@@ -67,9 +63,10 @@ class Composer {
    * @see https://jonlabelle.com/snippets/view/php/generate-md5-hash-for-directory
    *   Original code, modified for use with Drupal Markdown.
    *
+   * @internal
    * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
    *   No replacement.
-   * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+   * @see https://www.drupal.org/project/markdown/issues/3200476
    */
   public static function generateHash($directory) {
     if (!$directory || !($directory = realpath($directory)) || !is_dir($directory)) {
@@ -110,14 +107,14 @@ class Composer {
    * @internal
    * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
    *   No replacement.
-   * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+   * @see https://www.drupal.org/project/markdown/issues/3200476
    */
   public static function getInstalledJson($name, array $comparisonJson = []) {
     /** @var \Composer\Autoload\ClassLoader $autoloader */
     $autoloader = \Drupal::service('class_loader');
     if ($name && ($file = $autoloader->findFile('Composer\\Semver\\Semver'))) {
       if (($file = realpath(dirname($file) . "/../../installed.json")) && ($contents = file_get_contents($file)) && ($installedJson = Json::decode($contents))) {
-        $packages = array_filter($installedJson, function ($package) use ($name) {
+        $packages = array_filter(isset($installedJson['packages']) ? $installedJson['packages'] : $installedJson, function ($package) use ($name) {
           return !empty($package['name']) && $package['name'] === $name;
         });
         if (!$packages && $comparisonJson) {
@@ -170,7 +167,7 @@ class Composer {
    * @internal
    * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
    *   No replacement.
-   * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+   * @see https://www.drupal.org/project/markdown/issues/3200476
    */
   public static function getInstalledVersion($name, array $comparisonJson = []) {
     if ($name && ($installedJson = static::getInstalledJson($name, $comparisonJson)) && !empty($installedJson['version'])) {
@@ -192,7 +189,7 @@ class Composer {
    * @internal
    * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
    *   No replacement.
-   * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+   * @see https://www.drupal.org/project/markdown/issues/3200476
    */
   public static function getJson($directory, &$name = NULL) {
     if (($file = realpath("$directory/composer.json")) && ($contents = file_get_contents($file)) && ($json = Json::decode($contents))) {
@@ -221,7 +218,7 @@ class Composer {
    * @internal
    * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
    *   No replacement.
-   * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+   * @see https://www.drupal.org/project/markdown/issues/3200476
    */
   public static function getJsonFromClass($className, &$name = NULL, &$file = NULL) {
     /** @var \Composer\Autoload\ClassLoader $autoloader */
@@ -264,7 +261,7 @@ class Composer {
    * @internal
    * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
    *   No replacement.
-   * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+   * @see https://www.drupal.org/project/markdown/issues/3200476
    */
   public static function getVersionHash($name = NULL, $sort = Semver::SORT_DESC) {
     if (!static::$versionHash) {
@@ -307,7 +304,7 @@ class Composer {
    * @internal
    * @deprecated in markdown:8.x-2.0 and is removed from markdown:4.0.0.
    *   No replacement.
-   * @see https://blog.packagist.com/composer-2-development-update/#changelog-
+   * @see https://www.drupal.org/project/markdown/issues/3200476
    */
   public static function getVersionFromClass($className, $default = NULL, $cache = TRUE) {
     if (is_object($className)) {

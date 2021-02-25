@@ -109,7 +109,7 @@ class CommonMark extends BaseExtensibleParser implements AllowedHtmlInterface {
     /* @var \Drupal\markdown\Annotation\InstallablePlugin $pluginDefinition */
 
     // CommonMark didn't have configuration until 0.6.0.
-    if (!$pluginDefinition->version || Semver::satisfies($pluginDefinition->version, '<0.6.0')) {
+    if (Semver::satisfies($pluginDefinition->version, '<0.6.0')) {
       return [];
     }
 
@@ -305,17 +305,14 @@ class CommonMark extends BaseExtensibleParser implements AllowedHtmlInterface {
   public function converter() {
     if (!$this->converter) {
       $version = $this->getVersion();
-      switch (TRUE) {
-        case $version && Semver::satisfies($version, '>=0.13.0'):
-          $this->converter = $this->getObject($this->getSettings(TRUE), $this->getEnvironment());
-          break;
-
-        case $version && Semver::satisfies($version, '>=0.6.0 <0.13.0'):
-          $this->converter = $this->getObject($this->getSettings(TRUE));
-          break;
-
-        default:
-          $this->converter = $this->getObject();
+      if (Semver::satisfies($version, '>=0.13.0')) {
+        $this->converter = $this->getObject($this->getSettings(TRUE), $this->getEnvironment());
+      }
+      elseif (Semver::satisfies($version, '>=0.6.0 <0.13.0')) {
+        $this->converter = $this->getObject($this->getSettings(TRUE));
+      }
+      else {
+        $this->converter = $this->getObject();
       }
     }
     return $this->converter;

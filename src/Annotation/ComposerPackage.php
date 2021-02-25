@@ -2,18 +2,19 @@
 
 namespace Drupal\markdown\Annotation;
 
+use Composer\InstalledVersions;
 use Doctrine\Common\Annotations\AnnotationException;
-use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\markdown\Util\Composer;
 
 /**
- * ComposerPackage Annotation.
+ * Annotation for providing an installable library via Composer.
  *
  * @Annotation
  * @Target("ANNOTATION")
  *
  * @todo Move upstream to https://www.drupal.org/project/installable_plugins.
+ * @see https://www.drupal.org/project/markdown/issues/3200476
  */
 class ComposerPackage extends InstallableLibrary {
 
@@ -24,14 +25,19 @@ class ComposerPackage extends InstallableLibrary {
    *   The detected version of the Composer package or NULL if not enabled.
    */
   protected function detectVersion() {
-    // Retrieve the installed Composer version.
-    if ($version = Composer::getInstalledVersion($this->getId())) {
-      return $version;
+    $id = $this->getId();
+
+    // Composer 1 support.
+    // @todo Remove in 4.0.0.
+    // @see https://www.drupal.org/project/markdown/issues/3200476
+    if (!class_exists('\Composer\InstalledVersions')) {
+      return Composer::getInstalledVersion($id) ?: Composer::getVersionFromClass($this->object);
     }
 
-    // Retrieve the installed Composer version from the class of the object.
-    if ($version = Composer::getVersionFromClass($this->object)) {
-      return $version;
+    // Composer 2+ runtime installed versions support.
+    // @see https://getcomposer.org/doc/07-runtime.md#knowing-the-version-of-package-x
+    if (InstalledVersions::isInstalled($id)) {
+      return InstalledVersions::getPrettyVersion($id);
     }
   }
 
@@ -83,6 +89,7 @@ class ComposerPackage extends InstallableLibrary {
       return $parts[0];
     }
   }
+
   /**
    * {@inheritdoc}
    */
