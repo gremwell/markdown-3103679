@@ -5,7 +5,21 @@
  *
  * Variables:
  * - attributes: HTML attributes to be added to the element.
- * - library: The InstallableLibrary definition.
+ * - id: The libary identifier.
+ * - installed_library: The installed InstallableLibrary annotated plugin
+ *   definition.
+ * - isBundled: Flag indicating if this library is bundled.
+ * - isMultiple: Flag indicating if this library is just one of many that
+ *   could be used.
+ * - isPreferred: Flag indicating if this is the preferred library.
+ * - latestVersion: The latest version of the library.
+ * - library: The InstallableLibrary annotated plugin definition.
+ * - plugin: The InstallablePluginInterface instance.
+ * - preferred_library: The preferred InstallableLibrary annotated plugin
+ *   definition.
+ * - status: The raw machine key of the current status of the library.
+ * - statusTitle: The human reable label of the current status of the library.
+ * - version: The currently installed version.
  *
  * @see markdown_preprocess_installable_library()
  *
@@ -14,27 +28,12 @@
  * @todo Move upstream to https://www.drupal.org/project/installable_plugins.
  */
 #}
-{% set version = library.getVersionLink ?: (library.versionExtra ?: library.version) %}
-{% set latestVersion = library.getLatestVersion %}
-{% set lib = library ?: preferredLibrary %}
-
-{#
-  Older versions of core couldn't handle objects being passed to
-  \Drupal\Component\Utility\Html::getClass(), cast to strings here.
-#}
-{% set id = '' ~ library.id ? library.id.getId : '' %}
-{% set status = '' ~ (lib ? lib.getStatus : '') %}
-
-{% set statusTitle = lib ? lib.getStatus(true) : null %}
-{% set multiple = plugin and plugin.pluginDefinition.libraries|length > 1 %}
-{% set preferred = multiple and library.preferred %}
-
 {% set classes = [
   'installable-library',
   id ? 'installable-library--' ~ id|clean_class,
   status ?'installable-library--' ~ status|clean_class,
-  multiple ? 'installable-library--multiple',
-  preferred ? 'installable-library--preferred',
+  isMultiple ? 'installable-library--multiple',
+  isPreferred ? 'installable-library--preferred',
 ] %}
 <span{{ attributes.addClass(classes) }}>
   <span class="installable-library-status{{ library.isInstalled ? ' installable-library-status--installed' : '' }}" title="{{ statusTitle }}"></span>
@@ -46,11 +45,10 @@
         {% else %}
           {{ library.label ?: library.id }}
         {% endif %}
-        {% if preferred %}
-          ({{ 'preferred'|t }})
-        {% endif %}
-        {% if plugin and plugin.isBundled(library) and library.isInstalled %}
+        {% if isBundled %}
           ({{ 'bundled'|t }})
+        {% elseif isPreferred and not library.isInstalled %}
+          ({{ 'preferred'|t }})
         {% endif %}
       </strong>
     </span>

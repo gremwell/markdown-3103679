@@ -3,6 +3,7 @@
 namespace Drupal\markdown\Plugin\Markdown\CommonMark;
 
 use Drupal\markdown\Plugin\Markdown\BaseExtension as MarkdownBaseExtension;
+use Drupal\markdown\Plugin\Markdown\ExtensibleParserInterface;
 use Drupal\markdown\Traits\ParserAwareTrait;
 
 /**
@@ -20,6 +21,14 @@ abstract class BaseExtension extends MarkdownBaseExtension implements ExtensionI
    * {@inheritdoc}
    */
   public function register($environment) {
+    // Immediately return if the parser automatically registers the extension.
+    // @todo Refactor terminology here as "bundled" should mean that it is
+    //   installed/included with a library; which is different from being
+    //   automatically registered.
+    if (($parser = $this->getParser()) instanceof ExtensibleParserInterface && in_array($this->getPluginId(), $parser->getBundledExtensionIds(), TRUE)) {
+      return;
+    }
+
     // Most plugins define the library object as the extension class that
     // represents the extension that should be registered with CommonMark.
     // This is added to the base class to assist with this common workflow.
