@@ -13,6 +13,7 @@ use Drupal\Core\Url;
 use Drupal\markdown\Annotation\InstallableLibrary;
 use Drupal\markdown\BcSupport\ObjectWithPluginCollectionInterface;
 use Drupal\markdown\BcSupport\PluginDependencyTrait;
+use Drupal\markdown\Exception\MissingVersionException;
 use Drupal\markdown\Traits\MoreInfoTrait;
 use Drupal\markdown\Util\FilterAwareInterface;
 use Drupal\markdown\Util\FilterFormatAwareInterface;
@@ -302,8 +303,13 @@ abstract class InstallablePluginBase extends CoreBasePlugin implements Installab
    */
   public function getLabel($version = TRUE) {
     $label = $this->pluginDefinition->label ?: $this->pluginDefinition->getId();
-    if ($version && ($version = $this->getVersion())) {
-      $label .= " ({$version})";
+    try {
+      if ($version && ($version = $this->getVersion())) {
+        $label .= " ({$version})";
+      }
+    }
+    catch (MissingVersionException $exception) {
+      // Intentionally do nothing.
     }
     return $label;
   }
@@ -370,6 +376,9 @@ abstract class InstallablePluginBase extends CoreBasePlugin implements Installab
    * {@inheritdoc}
    */
   public function getVersion() {
+    if (!$this->pluginDefinition->version) {
+      throw new MissingVersionException(sprintf('The library "%s" did not not specify a version. If the plugin has no version, it must be explicitly set to "0.0.0".', $this->getPluginId()));
+    }
     return $this->pluginDefinition->version;
   }
 

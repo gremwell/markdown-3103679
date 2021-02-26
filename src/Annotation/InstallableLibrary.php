@@ -8,7 +8,6 @@ use Drupal\Core\Cache\CacheableResponse;
 use Drupal\Core\Link;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Utility\Error;
-use Drupal\markdown\Exception\MissingVersionException;
 use Drupal\markdown\Traits\HttpClientTrait;
 use Drupal\markdown\Util\Semver;
 use GuzzleHttp\Exception\GuzzleException;
@@ -83,9 +82,6 @@ class InstallableLibrary extends AnnotationObject {
     // Detect version of PHP extension.
     if (!isset($this->version)) {
       $version = $this->detectVersion();
-      if (!$version) {
-        throw new MissingVersionException(sprintf('The library "%s" did not not specify a version. If the plugin has no version, it must be explicitly set to "0.0.0".', $this->id));
-      }
       if (is_array($version) && count($version) === 2) {
         list($raw, $extra) = $version;
         $this->version = $raw;
