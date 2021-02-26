@@ -47,24 +47,35 @@ class ExtensionCollection extends DefaultLazyPluginCollection {
     // Process passed configurations with known extension definitions.
     $configurations = $parser->config()->get('extensions') ?: [];
     foreach ($configurations as $key => &$configuration) {
+      $originalKey = $key;
+
+      // Ensure the plugin key is set in the configuration.
       if (isset($definitions[$key])) {
-        // Ensure the plugin key is set in the configuration.
         $configuration[$this->pluginKey] = $key;
         continue;
       }
+
       // Configuration defined a plugin key, use it.
-      elseif (isset($configuration[$this->pluginKey])) {
-        $configurations[$configuration[$this->pluginKey]] = $configuration;
+      $key = isset($configuration[$this->pluginKey]) ? $configuration[$this->pluginKey] : NULL;
+      if (isset($key)) {
+        $configurations[$key] = $configuration;
       }
 
-      // Remove unknown definition.
-      unset($configurations[$key]);
+      // Remove unknown configurations.
+      if ($key !== $originalKey) {
+        unset($configurations[$originalKey]);
+      }
     }
 
     // Ensure required dependencies are enabled.
+    // Note: property is prefixed with an underscore to denote it as internal.
+    // @see \Drupal\markdown\PluginManager\ExtensionManager::alterDefinitions
+    // @todo Figure out a better way to handle this.
     foreach ($definitions as $pluginId => $definition) {
-      if (!empty($definition['requiredBy'])) {
-        foreach ($definition['requiredBy'] as $dependent) {
+      if (!empty($definition['_requiredBy'])) {
+        foreach ($definition['_requiredBy'] as $dependent) {
+          // Ensure dependent is a string.
+          $dependent = (string) $dependent;
           if (isset($configurations[$dependent]) && (!isset($configurations[$dependent]['enabled']) || !empty($configurations[$dependent]['enabled']))) {
             if (!isset($configurations[$pluginId])) {
               $configurations[$pluginId] = ['id' => $pluginId];

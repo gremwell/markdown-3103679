@@ -62,6 +62,8 @@ class ExtensionManager extends InstallablePluginManager implements ExtensionMana
     /** @var \Drupal\markdown\Annotation\MarkdownExtension[] $definitions */
 
     // Create dependency relationships between extensions.
+    // Note: property is prefixed with an underscore to denote it as internal.
+    // @see \Drupal\markdown\PluginManager\ExtensionCollection::__construct
     // @todo Figure out a better way to handle this.
     foreach ($definitions as $definition) {
       if (!isset($definition['_requiredBy'])) {
