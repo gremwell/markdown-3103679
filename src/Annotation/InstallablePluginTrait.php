@@ -17,13 +17,6 @@ use Drupal\markdown\Util\Error;
 trait InstallablePluginTrait {
 
   /**
-   * The description of the plugin.
-   *
-   * @var \Drupal\Core\Annotation\Translation
-   */
-  public $description;
-
-  /**
    * Indicates the plugin has been deprecated by providing a message.
    *
    * @var \Drupal\Core\Annotation\Translation
@@ -47,13 +40,6 @@ trait InstallablePluginTrait {
    * @see https://www.drupal.org/project/markdown/issues/3142418
    */
   public $installed;
-
-  /**
-   * A human-readable label.
-   *
-   * @var \Drupal\Core\Annotation\Translation
-   */
-  public $label;
 
   /**
    * The class name of the primary object that is implemented by the library.
@@ -154,13 +140,6 @@ trait InstallablePluginTrait {
    * @see https://www.drupal.org/project/markdown/issues/3142418
    */
   public $versionConstraint;
-
-  /**
-   * The weight of the plugin.
-   *
-   * @var int
-   */
-  public $weight = 0;
 
   /**
    * Retrieves the plugin as a link using its label and URL.

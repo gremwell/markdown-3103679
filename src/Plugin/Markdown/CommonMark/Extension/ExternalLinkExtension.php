@@ -12,6 +12,7 @@ use Drupal\markdown\Plugin\Markdown\CommonMark\BaseExtension;
 use Drupal\markdown\Plugin\Markdown\CommonMark\CommonMark;
 use Drupal\markdown\Plugin\Markdown\ParserInterface;
 use Drupal\markdown\Plugin\Markdown\SettingsInterface;
+use Drupal\markdown\Traits\FormTrait;
 use Drupal\markdown\Traits\SettingsTrait;
 use Drupal\markdown\Util\KeyValuePipeConverter;
 
@@ -108,19 +109,7 @@ class ExternalLinkExtension extends BaseExtension implements AllowedHtmlInterfac
       '#description' => $this->t('Defines a whitelist of hosts which are considered non-external and should not receive the external link treatment. This can be a single host name, like <code>example.com</code>, which must match exactly. Wildcard matching is also supported using regular expression like <code>/(^|\.)example\.com$/</code>. Note that you must use <code>/</code> characters to delimit your regex. By default, if no internal hosts are provided, all links will be considered external. One host per line.'),
     ], $form_state, '\Drupal\markdown\Util\KeyValuePipeConverter::denormalizeNoKeys');
 
-    if (\Drupal::moduleHandler()->moduleExists('token')) {
-      $element['token'] = [
-        '#theme' => 'token_tree_link',
-        '#token_types' => [],
-        '#global_types' => TRUE,
-        '#dialog' => TRUE,
-      ];
-    }
-    else {
-      $element['token']['#markup'] = t('To browse available tokens, install the @token module.', [
-        '@token' => \Drupal\Core\Link::fromTextAndUrl('Token', Url::fromUri('https://www.drupal.org/project/token', ['attributes' => ['target' => '_blank']]))->toString(),
-      ]);
-    }
+    $element['token'] = FormTrait::createTokenBrowser();
 
     $element += $this->createSettingElement('html_class', [
       '#type' => 'textfield',

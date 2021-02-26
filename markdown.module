@@ -163,18 +163,30 @@ function markdown_preprocess_installable_library(&$variables) {
 
   /** @var \Drupal\markdown\Annotation\InstallableLibrary|null $library */
   $library = isset($variables['library']) ? $variables['library'] : NULL;
-
-  $variables['id'] = $library ? $library->getId() : '';
-  $variables['version'] = $library ? ($library->getVersionLink() ?: ($library->versionExtra ?: $library->version)) : 'N/A';
-  $variables['latestVersion'] = $library ? $library->getLatestVersion() : NULL;
-
   $lib = $library ?: $preferredLibrary;
+
+  $variables['id'] = $lib ? $lib->getId() : '';
+  $variables['version'] = $lib ? ($lib->getVersionLink() ?: ($lib->versionExtra ?: $lib->version)) : NULL;
+  $variables['latestVersion'] = $lib ? $lib->getLatestVersion() : NULL;
+
   $variables['status'] = $lib ? $lib->getStatus() : NULL;
   $variables['statusTitle'] = $lib ? $lib->getStatus(TRUE) : NULL;
 
   $variables['isMultiple'] = $multiple = $plugin && count($plugin->getPluginDefinition()->libraries) > 1;
   $variables['isBundled'] = $plugin instanceof ExtensionInterface && $plugin->isBundled();
   $variables['isPreferred'] = $multiple && $library->preferred;
+
+  $label = ($lib->customLabel ?: $lib->label ?: $lib->getId());
+  if ($lib->version) {
+    $label .= ':' . ($lib->versionExtra ?: $lib->version);
+  }
+  if ($variables['isBundled']) {
+    $label .= ' (' . t('bundled') . ')';
+  }
+  if ($variables['isPreferred'] && !$plugin->isInstalled()) {
+    $label .= ' (' . t('preferred') . ')';
+  }
+  $variables['label'] = $lib->getVersionLink($lib->version, $label);
 }
 
 /**
@@ -188,6 +200,7 @@ function markdown_theme($existing, $type, $theme, $path) {
       'isBundled' => NULL,
       'isMultiple' => NULL,
       'isPreferred' => NULL,
+      'label' => NULL,
       'latestVersion' => NULL,
       'library' => NULL,
       'plugin' => NULL,

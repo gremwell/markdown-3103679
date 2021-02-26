@@ -51,6 +51,27 @@ abstract class AnnotationObject extends AnnotationBase implements \ArrayAccess, 
   private $_triggeredDeprecations = []; // phpcs:ignore
 
   /**
+   * The description of the plugin.
+   *
+   * @var \Drupal\Core\Annotation\Translation
+   */
+  public $description;
+
+  /**
+   * A human-readable label.
+   *
+   * @var \Drupal\Core\Annotation\Translation
+   */
+  public $label;
+
+  /**
+   * The weight of the plugin.
+   *
+   * @var int
+   */
+  public $weight = 0;
+
+  /**
    * AnnotationObject constructor.
    *
    * @param array $values

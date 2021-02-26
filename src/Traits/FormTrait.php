@@ -7,6 +7,7 @@ use Drupal\Component\Render\MarkupInterface;
 use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
 
@@ -14,6 +15,13 @@ use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter
  * Trait providing helpful methods when dealing with forms.
  */
 trait FormTrait {
+
+  /**
+   * Flag indicating whether the token module exists.
+   *
+   * @var bool
+   */
+  protected static $tokenModuleExists;
 
   /**
    * Adds a #states selector to an element.
@@ -97,11 +105,13 @@ trait FormTrait {
    * @param array $messages
    *   An array of messages, grouped by message type (i.e.
    *   ['status' => ['message']]).
+   * @param int $weight
+   *   The weight of the message.
    *
    * @return array
    *   The messages converted into a render array to be used inline.
    */
-  public static function createInlineMessage(array $messages) {
+  public static function createInlineMessage(array $messages, $weight = -10) {
     static $headings;
     if (!$headings) {
       $headings = [
@@ -112,7 +122,8 @@ trait FormTrait {
       ];
     }
     return [
-      '#weight' => -10,
+      '#type' => 'item',
+      '#weight' => $weight,
       '#theme' => 'status_messages',
       '#message_list' => $messages,
       '#status_headings' => $headings,
@@ -150,6 +161,18 @@ trait FormTrait {
     return $selector ? ':input[name="' . $selector . '"]' : '';
   }
 
+  /**
+   * Allows a form element to be reset to its default value.
+   *
+   * @param array $element
+   *   The render array element to modify, passed by reference.
+   * @param string $name
+   *   The name.
+   * @param mixed $defaultValue
+   *   The default value.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
   public static function resetToDefault(array &$element, $name, $defaultValue, FormStateInterface $form_state) {
     /** @var \Drupal\markdown\Form\SubformStateInterface $form_state */
     $selector = static::getElementSelector($name, $form_state->createParents());
@@ -178,7 +201,42 @@ trait FormTrait {
       '@title' => $element['#title'],
       '@reset' => $renderer->renderPlain($reset),
     ]);
+  }
 
+  /**
+   * Creates a Token browser element for use when dealing with tokens.
+   *
+   * @param array $tokenTypes
+   *   An array of token types.
+   * @param bool $globalTypes
+   *   Flag indicating whether to display global tokens.
+   * @param bool $dialog
+   *   Flag indicating whether to show the browser in a dialog.
+   *
+   * @return array
+   *   A new render array element.
+   */
+  public static function createTokenBrowser(array $tokenTypes = [], $globalTypes = TRUE, $dialog = TRUE) {
+    if (!isset(static::$tokenModuleExists)) {
+      static::$tokenModuleExists = \Drupal::moduleHandler()->moduleExists('token');
+    }
+
+    if (static::$tokenModuleExists) {
+      return [
+        '#type' => 'item',
+        '#theme' => 'token_tree_link',
+        '#token_types' => $tokenTypes,
+        '#global_types' => $globalTypes,
+        '#dialog' => $dialog,
+      ];
+    }
+
+    return [
+      '#type' => 'item',
+      '#markup' => t('To browse available tokens, install the @token module.', [
+        '@token' => Link::fromTextAndUrl('Token', Url::fromUri('https://www.drupal.org/project/token', ['attributes' => ['target' => '_blank']]))->toString(),
+      ]),
+    ];
   }
 
 }

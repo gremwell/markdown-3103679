@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\markdown\Routing;
+namespace Drupal\markdown\ParamConverter;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\ParamConverter\ParamConverterInterface;
@@ -12,6 +12,9 @@ use Drupal\markdown\PluginManager\ExtensionManagerInterface;
 use Drupal\markdown\PluginManager\ParserManagerInterface;
 use Symfony\Component\Routing\Route;
 
+/**
+ * Parameter convertor for Markdown plugins.
+ */
 class MarkdownParamConverter implements ParamConverterInterface {
 
   /**

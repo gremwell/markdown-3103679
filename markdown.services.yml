@@ -14,12 +14,6 @@ services:
     class: Drupal\markdown\Markdown
     arguments: ['@cache.markdown', '@config.factory', '@file_system', '@http_client', '@plugin.manager.markdown.parser']
 
-  markdown.param_converter:
-    class: Drupal\markdown\Routing\MarkdownParamConverter
-    arguments: ['@config.factory', '@plugin.manager.markdown.parser', '@plugin.manager.markdown.extension', '@plugin.manager.markdown.allowed_html']
-    tags:
-      - { name: paramconverter, priority: 10 }
-
   markdown_plugin_manager:
     abstract: true
     arguments: ['@container.namespaces', '@cache.discovery', '@config.factory', '@logger.channel.markdown', '@module_handler']
@@ -27,6 +21,12 @@ services:
       - [setContainer, ['@service_container']]
     tags:
       - { name: plugin_manager_cache_clear }
+
+  paramconverter.markdown:
+    class: Drupal\markdown\ParamConverter\MarkdownParamConverter
+    arguments: ['@config.factory', '@plugin.manager.markdown.parser', '@plugin.manager.markdown.extension', '@plugin.manager.markdown.allowed_html']
+    tags:
+      - { name: paramconverter, priority: 10 }
 
   plugin.manager.markdown.extension:
     parent: markdown_plugin_manager

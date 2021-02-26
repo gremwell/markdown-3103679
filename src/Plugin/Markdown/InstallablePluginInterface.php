@@ -3,20 +3,16 @@
 namespace Drupal\markdown\Plugin\Markdown;
 
 use Drupal\Component\Plugin\DependentPluginInterface;
-use Drupal\Component\Plugin\PluginInspectionInterface;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\markdown\Annotation\InstallableLibrary;
-use Drupal\markdown\BcSupport\ConfigurableInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 
 /**
- * Interface for installable Markdown plugins.
+ * Interface for installable plugins.
  *
  * @method \Drupal\markdown\Annotation\InstallablePlugin getPluginDefinition()
  *
  * @todo Move upstream to https://www.drupal.org/project/installable_plugins.
  */
-interface InstallablePluginInterface extends ConfigurableInterface, ContainerAwareInterface, ContainerFactoryPluginInterface, DependentPluginInterface, PluginInspectionInterface {
+interface InstallablePluginInterface extends AnnotatedPluginInterface, DependentPluginInterface {
 
   /**
    * Builds a display for a library.
@@ -47,32 +43,12 @@ interface InstallablePluginInterface extends ConfigurableInterface, ContainerAwa
   public function config();
 
   /**
-   * Retrieves the configuration overrides for the plugin.
-   *
-   * @param array $configuration
-   *   Optional. Specific configuration to check. If not set, the currently
-   *   set configuration will be used.
-   *
-   * @return array
-   *   An array of configuration overrides.
-   */
-  public function getConfigurationOverrides(array $configuration = NULL);
-
-  /**
    * Retrieves the deprecation message, if any.
    *
    * @return \Drupal\Core\StringTranslation\TranslatableMarkup|void
    *   The deprecated message, if set.
    */
   public function getDeprecated();
-
-  /**
-   * Retrieves the description of the plugin, if set.
-   *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup
-   *   The description.
-   */
-  public function getDescription();
 
   /**
    * Retrieves the experimental message.
@@ -151,30 +127,12 @@ interface InstallablePluginInterface extends ConfigurableInterface, ContainerAwa
   public function getObjectClass();
 
   /**
-   * Retrieves the original plugin identifier.
-   *
-   * This is the identifier that was initially called, but may have changed
-   * to the fallback identifier because it didn't exist.
-   *
-   * @return string
-   */
-  public function getOriginalPluginId();
-
-  /**
    * Retrieves the preferred library of the plugin.
    *
    * @return \Drupal\markdown\Annotation\InstallableLibrary|void
    *   The preferred library, if any.
    */
   public function getPreferredLibrary();
-
-  /**
-   * Returns the provider (extension name) of the plugin.
-   *
-   * @return string
-   *   The provider of the plugin.
-   */
-  public function getProvider();
 
   /**
    * Retrieves the configuration for the plugin, but sorted.
@@ -205,14 +163,6 @@ interface InstallablePluginInterface extends ConfigurableInterface, ContainerAwa
    *   The plugin version.
    */
   public function getVersion();
-
-  /**
-   * Returns the weight of the plugin (used for sorting).
-   *
-   * @return int
-   *   The plugin weight.
-   */
-  public function getWeight();
 
   /**
    * Indicates whether plugin has multiple installs to check.

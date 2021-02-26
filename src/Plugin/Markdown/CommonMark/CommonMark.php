@@ -109,7 +109,7 @@ class CommonMark extends BaseExtensibleParser implements AllowedHtmlInterface {
     /* @var \Drupal\markdown\Annotation\InstallablePlugin $pluginDefinition */
 
     // CommonMark didn't have configuration until 0.6.0.
-    if (Semver::satisfies($pluginDefinition->version, '<0.6.0')) {
+    if (!$pluginDefinition->version || Semver::satisfies($pluginDefinition->version, '<0.6.0')) {
       return [];
     }
 

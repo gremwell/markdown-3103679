@@ -394,6 +394,14 @@ class ParserConfigurationForm extends FormBase implements FilterAwareInterface, 
       $installed = $extension->isInstalled();
       $enabled = $extensionSubform->getValue('enabled', $extension->isEnabled());
 
+      if ($experimental = $extension->getExperimental()) {
+        $extensionElement['experimental'] = static::createInlineMessage([
+          'info' => [
+            $experimental === TRUE ? $this->t('This is an experimental extension. Not all features or functionality may work.') : $experimental,
+          ],
+        ]);
+      }
+
       $extensionElement['libraries'] = $extension->buildStatus(!$installed);
 
       // Extension enabled checkbox.

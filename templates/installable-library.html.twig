@@ -12,6 +12,7 @@
  * - isMultiple: Flag indicating if this library is just one of many that
  *   could be used.
  * - isPreferred: Flag indicating if this is the preferred library.
+ * - label: The human readable label of the library.
  * - latestVersion: The latest version of the library.
  * - library: The InstallableLibrary annotated plugin definition.
  * - plugin: The InstallablePluginInterface instance.
@@ -39,18 +40,7 @@
   <span class="installable-library-status{{ library.isInstalled ? ' installable-library-status--installed' : '' }}" title="{{ statusTitle }}"></span>
   <span class="installable-library-content">
     <span>
-      <strong>
-        {% if library.version %}
-          {{ library.getVersionLink(library.version, (library.label ?: library.id) ~ ':' ~ (library.versionExtra ?: library.version)) }}
-        {% else %}
-          {{ library.label ?: library.id }}
-        {% endif %}
-        {% if isBundled %}
-          ({{ 'bundled'|t }})
-        {% elseif isPreferred and not library.isInstalled %}
-          ({{ 'preferred'|t }})
-        {% endif %}
-      </strong>
+      <strong>{{ label }}</strong>
     </span>
     {% if library.version %}
       {% if preferredLibrary and library.id != preferredLibrary.id %}

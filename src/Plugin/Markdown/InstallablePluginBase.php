@@ -8,7 +8,6 @@ use Drupal\Component\Utility\NestedArray;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\Plugin\PluginBase as CoreBasePlugin;
 use Drupal\Core\Url;
 use Drupal\markdown\Annotation\InstallableLibrary;
 use Drupal\markdown\BcSupport\ObjectWithPluginCollectionInterface;
@@ -18,7 +17,6 @@ use Drupal\markdown\Traits\MoreInfoTrait;
 use Drupal\markdown\Util\FilterAwareInterface;
 use Drupal\markdown\Util\FilterFormatAwareInterface;
 use Drupal\markdown\Util\ParserAwareInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -29,9 +27,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @todo Move upstream to https://www.drupal.org/project/installable_plugins.
  */
-abstract class InstallablePluginBase extends CoreBasePlugin implements InstallablePluginInterface {
+abstract class InstallablePluginBase extends AnnotatedPluginBase implements InstallablePluginInterface {
 
-  use ContainerAwareTrait;
   use MoreInfoTrait;
   use PluginDependencyTrait {
     getPluginDependencies as getPluginDependenciesTrait;
@@ -43,37 +40,6 @@ abstract class InstallablePluginBase extends CoreBasePlugin implements Installab
    * @var \Drupal\Core\Config\ImmutableConfig
    */
   protected $config;
-
-
-  /**
-   * The original plugin_id that was called, not a fallback identifier.
-   *
-   * @var string
-   */
-  protected $originalPluginId;
-
-  /**
-   * {@inheritdoc}
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->originalPluginId = isset($configuration['original_plugin_id']) ? $configuration['original_plugin_id'] : $plugin_id;
-    $this->setConfiguration($configuration);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function __toString() {
-    return $this->getPluginId();
-  }
 
   /**
    * {@inheritdoc}
@@ -183,27 +149,19 @@ abstract class InstallablePluginBase extends CoreBasePlugin implements Installab
    * {@inheritdoc}
    */
   public function getConfiguration() {
-    $configuration['id'] = $this->getPluginId();
+    $configuration = parent::getConfiguration();
     $configuration['dependencies'] = $this->getPluginDependencies($this);
-    $configuration['weight'] = $this->getWeight();
+
     if ($this instanceof EnabledPluginInterface) {
       $configuration['enabled'] = $this->isEnabled();
     }
+
     if ($this instanceof SettingsInterface) {
       // Only return settings that have changed from the default values.
       $configuration['settings'] = $this->getSettingOverrides();
     }
-    return $configuration;
-  }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function getConfigurationOverrides(array $configuration = NULL) {
-    if (!isset($configuration)) {
-      $configuration = $this->configuration;
-    }
-    return DiffArray::diffAssocRecursive($configuration, $this->defaultConfiguration());
+    return $configuration;
   }
 
   /**
@@ -242,13 +200,6 @@ abstract class InstallablePluginBase extends CoreBasePlugin implements Installab
    */
   public function getDeprecated() {
     return $this->pluginDefinition->deprecated;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getDescription() {
-    return $this->pluginDefinition->description;
   }
 
   /**
@@ -294,13 +245,6 @@ abstract class InstallablePluginBase extends CoreBasePlugin implements Installab
   /**
    * {@inheritdoc}
    */
-  public function getOriginalPluginId() {
-    return $this->originalPluginId;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getLabel($version = TRUE) {
     $label = $this->pluginDefinition->label ?: $this->pluginDefinition->getId();
     try {
@@ -333,13 +277,6 @@ abstract class InstallablePluginBase extends CoreBasePlugin implements Installab
    */
   public function getPreferredLibrary() {
     return $this->pluginDefinition->getPreferredLibrary();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getProvider() {
-    return $this->pluginDefinition->getProvider();
   }
 
   /**
@@ -389,14 +326,6 @@ abstract class InstallablePluginBase extends CoreBasePlugin implements Installab
     if ($versionRequirement = current($this->pluginDefinition->getRequirementsByConstraint('Version'))) {
       return $versionRequirement->constraints['Version'];
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getWeight() {
-    $weight = $this->config->get('weight');
-    return isset($weight) ? (int) $weight : $this->pluginDefinition->weight;
   }
 
   /**
@@ -452,9 +381,7 @@ abstract class InstallablePluginBase extends CoreBasePlugin implements Installab
     }
 
     // Set all the config data as the property on the plugin.
-    $this->configuration = $this->config->get();
-
-    return $this;
+    parent::setConfiguration($this->config->get());
   }
 
   protected static function createConfig($name, array $data = [], $immutable = TRUE, ContainerInterface $container = NULL) {
@@ -477,6 +404,5 @@ abstract class InstallablePluginBase extends CoreBasePlugin implements Installab
   public function showInUi() {
     return $this->pluginDefinition->ui;
   }
-
 
 }

@@ -5,7 +5,6 @@ namespace Drupal\markdown\PluginManager;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheBackendInterface;
-use Drupal\Core\Cache\RefinableCacheableDependencyTrait;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
@@ -85,21 +84,19 @@ abstract class InstallablePluginManager extends DefaultPluginManager implements 
    * {@inheritdoc}
    */
   public function all(array $configuration = [], $includeFallback = FALSE) {
-    $instances = array_map(function (InstallablePlugin $definition) use ($configuration) {
-      $id = $definition->getId();
-      return $this->createInstance($id, isset($configuration[$id]) ? $configuration[$id] : $configuration);
-    }, $this->getDefinitions($includeFallback));
+    $definitions = $this->getDefinitions($includeFallback);
 
-    uasort($instances, function (InstallablePluginInterface $a, InstallablePluginInterface $b) {
-      $aWeight = $a->getWeight();
-      $bWeight = $b->getWeight();
-      if ($aWeight === $bWeight) {
+    uasort($definitions, function (InstallablePlugin $a, InstallablePlugin $b) {
+      if ($a->weight === $b->weight) {
         return 0;
       }
-      return $aWeight < $bWeight ? -1 : 1;
+      return $a->weight < $b->weight ? -1 : 1;
     });
 
-    return $instances;
+    return array_map(function (InstallablePlugin $definition) use ($configuration) {
+      $id = $definition->getId();
+      return $this->createInstance($id, isset($configuration[$id]) ? $configuration[$id] : $configuration);
+    }, $definitions);
   }
 
   /**
