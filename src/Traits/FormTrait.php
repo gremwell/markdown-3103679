@@ -224,6 +224,7 @@ trait FormTrait {
     if (static::$tokenModuleExists) {
       return [
         '#type' => 'item',
+        '#input' => FALSE,
         '#theme' => 'token_tree_link',
         '#token_types' => $tokenTypes,
         '#global_types' => $globalTypes,
@@ -233,6 +234,7 @@ trait FormTrait {
 
     return [
       '#type' => 'item',
+      '#input' => FALSE,
       '#markup' => t('To browse available tokens, install the @token module.', [
         '@token' => Link::fromTextAndUrl('Token', Url::fromUri('https://www.drupal.org/project/token', ['attributes' => ['target' => '_blank']]))->toString(),
       ]),

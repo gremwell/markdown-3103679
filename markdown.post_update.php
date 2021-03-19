@@ -53,23 +53,76 @@ function _markdown_normalize_config(Config $config, array $defaultData = [], $sa
   // Fix parser identifier.
   $parserId = $config->get($prefix . 'parser.id') ?: $config->get($prefix . 'parser') ?: $config->get($prefix . 'id') ?: $config->get($prefix . 'default_parser');
 
-  // Extract the parser identifier from the configuration name.
-  if (empty($parserId) && $isParser) {
-    $parserId = current(array_reverse(explode('.', $name)));
+  // Handle missing parser.
+  if ($parserId === '_missing_parser') {
+    $originalParserId = $config->get($prefix . 'parser.original_plugin_id') ?: $config->get($prefix . 'original_plugin_id');
+    if ($originalParserId) {
+      $parserId = $originalParserId;
+    }
+  }
+
+  // Extract the parser identifier, if possible.
+  if (empty($parserId)) {
+    // From the configuration name.
+    if ($isParser) {
+      $parserId = current(array_reverse(explode('.', $name)));
+    }
+    // Otherwise, this config cannot be upgraded it must be recreated manually.
+    else {
+      \Drupal::logger('markdown')->notice('Unable to update config for "%name", it must be updated manually or recreated from the UI.', [
+        '%name' => $name,
+      ]);
+      return;
+    }
   }
   if (isset($plugin_map[$parserId])) {
     $parserId = $plugin_map[$parserId];
     if ($isSettings) {
-      $config->set($prefix . 'default_parser', $parserId);
+      // Save the original markdown.settings config data.
+      $settingData = $config->get('parser');
+      if (!is_array($settingData)) {
+        $settingData = $config->get() ?: [];
+      }
+
+      // Set the default parser and save the new markdown.settings.
+      $config->setData(['default_parser' => $parserId]);
+      if ($save) {
+        $config->save();
+      }
+
+      /** @var \Drupal\Core\Config\ConfigFactoryInterface $configFactory */
+      $configFactory = \Drupal::service('config.factory');
+
+      // Reload config for the specific parser.
+      $config = $configFactory->getEditable("markdown.parser.$parserId");
+
+      // Save any existing parser config (in case a user saved before update).
+      $parserConfig = $config->get();
+
+      // Set the original markdown.settings configuration.
+      $config->setData($settingData);
+
+      // Merge back any existing parser config.
+      $config->merge($parserConfig);
+
+      // Let the normalization continue as parser config.
+      $isSettings = FALSE;
+      $isParser = TRUE;
     }
-    elseif ($isFilter || $isParser) {
-      $config->set($prefix . 'id', $parserId);
-    }
+  }
+
+  if ($isFilter || $isParser) {
+    $config->set($prefix . 'id', $parserId);
+  }
+
+  $override = FALSE;
+  if ($isFilter) {
+    $override = !!$config->get($prefix . 'override');
   }
 
   // Fix parser render strategy custom allowed HTML.
   $previousDefaultValue = '<a href hreflang> <abbr> <blockquote cite> <br> <cite> <code> <div> <em> <h2> <h3> <h4> <h5> <h6> <hr> <img alt height src width> <li> <ol start type=\'1 A I\'> <p> <pre> <span> <strong> <ul type>';
-  $renderStrategyAllowedHtml = $config->get($prefix . 'render_strategy.allowed_html');
+  $renderStrategyAllowedHtml = $config->get($prefix . 'parser.render_strategy.allowed_html') ?: $config->get($prefix . 'render_strategy.allowed_html');
   if (isset($renderStrategyAllowedHtml)) {
     // Remove default value.
     if (trim($renderStrategyAllowedHtml) === $previousDefaultValue) {
@@ -78,10 +131,13 @@ function _markdown_normalize_config(Config $config, array $defaultData = [], $sa
     // Move to new property name.
     $config->clear($prefix . 'render_strategy.allowed_html');
     $config->set($prefix . 'render_strategy.custom_allowed_html', $renderStrategyAllowedHtml);
+    if ($isFilter) {
+      $override = TRUE;
+    }
   }
 
   // Fix parser render strategy plugins.
-  $renderStrategyPlugins = $config->get($prefix . 'render_strategy.plugins');
+  $renderStrategyPlugins = $config->get($prefix . 'parser.render_strategy.plugins') ?: $config->get($prefix . 'render_strategy.plugins');
   if (isset($renderStrategyPlugins)) {
     foreach ($renderStrategyPlugins as $key => $value) {
       if (is_numeric($key)) {
@@ -105,10 +161,13 @@ function _markdown_normalize_config(Config $config, array $defaultData = [], $sa
       }
     }
     $config->set($prefix . 'render_strategy.plugins', $renderStrategyPlugins);
+    if ($isFilter) {
+      $override = TRUE;
+    }
   }
 
   // Fix extension identifiers.
-  $extensions = $config->get($prefix . 'extensions');
+  $extensions = $config->get($prefix . 'parser.extensions') ?: $config->get($prefix . 'extensions');
   if (isset($extensions)) {
     foreach ($extensions as $key => &$extension) {
       if (isset($plugin_map[$extension['id']])) {
@@ -116,6 +175,9 @@ function _markdown_normalize_config(Config $config, array $defaultData = [], $sa
       }
     }
     $config->set($prefix . 'extensions', $extensions);
+    if ($isFilter) {
+      $override = TRUE;
+    }
   }
 
   if ($isSettings) {
@@ -123,7 +185,7 @@ function _markdown_normalize_config(Config $config, array $defaultData = [], $sa
   }
   else {
     $configuration = $config->get($prefix . 'parser');
-    $configuration = array_replace_recursive(is_array($configuration) ? $configuration : [], $config->get($prefix) ?: [], $defaultData);
+    $configuration = array_replace_recursive(is_array($configuration) ? $configuration : [], $config->get(substr($prefix, 0, -1)) ?: [], $defaultData);
     $parser = ParserManager::create()->createInstance($parserId, $configuration);
 
     $configuration = $parser->getSortedConfiguration();
@@ -134,6 +196,7 @@ function _markdown_normalize_config(Config $config, array $defaultData = [], $sa
       unset($configuration['dependencies']);
       $config->set('dependencies', array_map('array_unique', $dependencies));
       $config->set(substr($prefix, 0, -1), $configuration);
+      $config->set($prefix . 'override', $override);
     }
     elseif ($isParser) {
       $config->setData($configuration);
@@ -172,8 +235,16 @@ function _markdown_update_config($save = TRUE, array $defaultData = NULL, callab
   $configFactory = \Drupal::service('config.factory');
 
   $configNames = ['markdown.settings'];
-  foreach (array_keys(ParserManager::create()->getDefinitions(FALSE)) as $parserId) {
-    $configNames[] = "markdown.parser.$parserId";
+  $parserManager = ParserManager::create();
+  $available = $parserManager->getDefinitions(FALSE);
+  $installed = array_keys($parserManager->installedDefinitions());
+  foreach (array_keys($available) as $parserId) {
+    if (in_array($parserId, $installed)) {
+      $configNames[] = "markdown.parser.$parserId";
+    }
+    else {
+      $configFactory->getEditable("markdown.parser.$parserId")->delete();
+    };
   }
 
   /** @var \Drupal\filter\Entity\FilterFormat $format */
@@ -200,6 +271,6 @@ function _markdown_update_config($save = TRUE, array $defaultData = NULL, callab
 /**
  * Update configuration (run config export after).
  */
-function markdown_post_update_8930() {
+function markdown_post_update_8950() {
   _markdown_update_config();
 }

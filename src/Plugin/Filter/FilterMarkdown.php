@@ -189,6 +189,20 @@ class FilterMarkdown extends FilterBase implements ContainerFactoryPluginInterfa
     // The settings of the filter plugin are the parser configuration.
     $parserConfiguration = $configuration['settings'];
 
+    // Some older 8.x-2.x code used to have just the parser as a string.
+    // @todo Remove after 8.x-2.0 release.
+    if (isset($parserConfiguration['parser'])) {
+      if (\is_string($parserConfiguration['parser'])) {
+        $parserConfiguration['id'] = $parserConfiguration['parser'];
+      }
+      // Some older 8.x-2.x code used to have nested parser config in an array.
+      // @todo Remove after 8.x-2.0 release.
+      elseif (is_array($parserConfiguration['parser'])) {
+        $parserConfiguration += $parserConfiguration['parser'];
+      }
+      unset($parserConfiguration['parser']);
+    }
+
     $parserId = !empty($parserConfiguration['id']) ? $parserConfiguration['id'] : $this->parserManager->getDefaultParser()->getPluginId();
 
     // If the "override" setting for the filter isn't flagged, then it should
