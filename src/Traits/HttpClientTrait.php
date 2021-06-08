@@ -31,9 +31,8 @@ trait HttpClientTrait {
    */
   protected static function httpClient($name = 'markdown', $type = 'module') {
     if (!static::$httpClient) {
-      // @todo Replace with "extension.list.$type" service.
-      $info = system_get_info($type, $name);
-      $extension = isset($info['name']) ? $info['name'] : $name;
+      $info = \Drupal::service('extension.list.' . $type)->getExtensionInfo($name);
+      $extension = $info['name'] ?? $name;
       if ($info && !empty($info['version'])) {
         $extension .= '/' . $info['version'];
       }

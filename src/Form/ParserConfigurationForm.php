@@ -703,7 +703,7 @@ class ParserConfigurationForm extends FormBase implements FilterAwareInterface, 
     // Invalidate any tags associated with the parser.
     $this->cacheTagsInvalidator->invalidateTags(["markdown.parser.$parserId"]);
 
-    drupal_set_message($this->t('The configuration options have been saved.'));
+    \Drupal::messenger()->addStatus($this->t('The configuration options have been saved.'));
   }
 
   /**
