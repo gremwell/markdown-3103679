@@ -31,7 +31,16 @@ trait HttpClientTrait {
    */
   protected static function httpClient($name = 'markdown', $type = 'module') {
     if (!static::$httpClient) {
-      $info = \Drupal::service('extension.list.' . $type)->getExtensionInfo($name);
+      $info = ['name' => $name];
+      try {
+        $info = \Drupal::service('extension.list.' . $type)->getExtensionInfo($name);
+      }
+      catch (\Exception $e) {
+        \Drupal::logger('markdown')->error('@type not installed: @name', [
+          '@type' => $type,
+          '@name' => $name,
+        ]);
+      }
       $extension = $info['name'] ?? $name;
       if ($info && !empty($info['version'])) {
         $extension .= '/' . $info['version'];
